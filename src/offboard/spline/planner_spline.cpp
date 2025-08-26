@@ -248,6 +248,7 @@ bool SPLINE_PLANNER::getNext(double &x, double &xd, double &xdd)
 	}
 
 	_counter++;
+	return true;
 }
 
 void CARTESIAN_PLANNER::set_waypoints(std::vector<geometry_msgs::msg::PoseStamped> poses, std::vector<double> times)

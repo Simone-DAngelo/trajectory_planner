@@ -144,9 +144,9 @@ OffboardControl::OffboardControl() : rclcpp::Node("offboard_control"), _state(ST
 	_joy_sub = this->create_subscription<sensor_msgs::msg::Joy>(
 		"/joy", qos, std::bind(&OffboardControl::joy_callback, this, std::placeholders::_1));
 
-	_x = {};
-	_xd = {};
-	_xdd = {};
+	_x = geometry_msgs::msg::PoseStamped();
+	_xd = geometry_msgs::msg::TwistStamped();
+	_xdd = geometry_msgs::msg::AccelStamped();
 	tf_buffer_ = std::make_shared<tf2_ros::Buffer>(this->get_clock());
 	tf_listener_ = std::make_shared<tf2_ros::TransformListener>(*tf_buffer_);
 
@@ -1264,7 +1264,7 @@ bool OffboardControl::plan(Eigen::Vector3d wp, std::shared_ptr<std::vector<POSE>
 			return false;
 		}else {
 
-			for( int i=0; i<(*opt_poses).size(); i++ ) {
+			for( size_t i=0; i<(*opt_poses).size(); i++ ) {
 				p.pose.position.x = (*opt_poses)[i].position.x;
 				p.pose.position.y = (*opt_poses)[i].position.y;
 				p.pose.position.z = (*opt_poses)[i].position.z;
@@ -1283,7 +1283,7 @@ bool OffboardControl::plan(Eigen::Vector3d wp, std::shared_ptr<std::vector<POSE>
 
 			std::cout << "Solution: " << std::endl;
 			
-			for(int i=0; i<(*opt_poses).size(); i++ ) {
+			for(size_t i=0; i<(*opt_poses).size(); i++ ) {
 				std::cout << "Pose: [" << i << "]: " << "(" << (*opt_poses)[i].position.x << " " << (*opt_poses)[i].position.y << " " << (*opt_poses)[i].position.z << ")" << std::endl;
 			}
 		}
@@ -1331,9 +1331,10 @@ void OffboardControl::check_path(const std::vector<POSE> & poses, const std::sha
 	double step = 0.05;
 	bool segment_checked = false;
 	bool trajetory_is_completed = false;
+	(void)trajetory_is_completed; // Suppress unused variable warning
 
 
-	while( valid_path && !_stop_trajectory && *wp < poses.size() && !_wp_traj_completed && !_replan){	 // continue checking while executing
+	while( valid_path && !_stop_trajectory && static_cast<size_t>(*wp) < poses.size() && !_wp_traj_completed && !_replan){	 // continue checking while executing
 		RCLCPP_INFO(get_logger(), "nel while grosso");
 
 		if(*wp != 0){
@@ -1365,9 +1366,9 @@ void OffboardControl::check_path(const std::vector<POSE> & poses, const std::sha
 				pt_i << _position(0), _position(1), _position(2); 
 			}
 			
-			RCLCPP_INFO(get_logger(), "START COLL CECK pose size= %d, wp= %d",poses.size(), *wp);
+			RCLCPP_INFO(get_logger(), "START COLL CECK pose size= %zu, wp= %d", poses.size(), *wp);
 
-			for(int i=*wp ; i<poses.size(); i++ ) { // dovrebbe essere <= perchè se rrt trova un solo punto non fa coll check. con 2 segmenti lo ha fatto.(goal molto vicino)
+			for(int i=*wp ; i<static_cast<int>(poses.size()); i++ ) { // dovrebbe essere <= perchè se rrt trova un solo punto non fa coll check. con 2 segmenti lo ha fatto.(goal molto vicino)
 				RCLCPP_INFO(get_logger(), "nel for wp"); // NON CI VA
 				pt_f << poses[i].position.x, poses[i].position.y, poses[i].position.z;
 				
@@ -1399,10 +1400,10 @@ void OffboardControl::check_path(const std::vector<POSE> & poses, const std::sha
 				pt_i = pt_f;
 
 				if(!valid_path) break;
-				RCLCPP_INFO(get_logger(), "pose size= %d, wp= %d",poses.size(), *wp);
+				RCLCPP_INFO(get_logger(), "pose size= %zu, wp= %d", poses.size(), *wp);
 			}
-			_wp_traj_completed = (!_trajectory.isReady() && *wp == poses.size()-1); 
-			RCLCPP_INFO(get_logger(), "trajectory ended: %d, pose size= %d, wp= %d", _trajectory.isReady(), poses.size(), *wp);
+			_wp_traj_completed = (!_trajectory.isReady() && static_cast<size_t>(*wp) == poses.size()-1); 
+			RCLCPP_INFO(get_logger(), "trajectory ended: %d, pose size= %zu, wp= %d", _trajectory.isReady(), poses.size(), *wp);
 		}
 		
 		if(_wp_traj_completed ){

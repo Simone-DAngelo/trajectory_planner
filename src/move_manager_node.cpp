@@ -55,10 +55,10 @@ public:
 
         rmw_qos_profile_t qos_profile = rmw_qos_profile_sensor_data;
         auto qos_px4 = rclcpp::QoS(rclcpp::QoSInitialization(qos_profile.history, 5), qos_profile);
+        (void)qos_px4; // Suppress unused variable warning
 
         if (SIMULATION)
         {
-            // Timer per tf publishing a 100Hz
             _tf_timer = this->create_wall_timer(10ms, std::bind(&MoveManager::timerTfCallback, this));
 
             auto qos_odom = rclcpp::QoS(rclcpp::KeepLast(10)).reliability(rclcpp::ReliabilityPolicy::BestEffort);
@@ -66,17 +66,12 @@ public:
             _odometry_sub = this->create_subscription<nav_msgs::msg::Odometry>("/model/baby_k_0/odometry", qos_odom,
                 [this](const nav_msgs::msg::Odometry::UniquePtr msg) {
 
-                    //this->staticTfPub(); // CHECK IF NEEDED
-
-                    // Prepare the TransformStamped message
                     geometry_msgs::msg::TransformStamped transform_stamped;
                     
-                    // Set the header
-                    transform_stamped.header.stamp = msg->header.stamp; // 
-                    transform_stamped.header.frame_id = "odom";  // Set to appropriate frame (ENU)
-                    transform_stamped.child_frame_id = "base_link";  // Set to appropriate frame
+                    transform_stamped.header.stamp = msg->header.stamp;
+                    transform_stamped.header.frame_id = "odom";
+                    transform_stamped.child_frame_id = "base_link";
 
-                    // Set translation (position)
                     transform_stamped.transform.translation.x = msg->pose.pose.position.x;
                     transform_stamped.transform.translation.y = msg->pose.pose.position.y;
                     transform_stamped.transform.translation.z = msg->pose.pose.position.z;
@@ -84,14 +79,9 @@ public:
                     transform_stamped.transform.rotation.x = msg->pose.pose.orientation.x;
                     transform_stamped.transform.rotation.y = msg->pose.pose.orientation.y;
                     transform_stamped.transform.rotation.z = msg->pose.pose.orientation.z;
-                    transform_stamped.transform.rotation.w = msg->pose.pose.orientation.w   ;
+                    transform_stamped.transform.rotation.w = msg->pose.pose.orientation.w;
 
-
-                    // Broadcast the transform
                     _tf_broadcaster->sendTransform(transform_stamped);
-
-                  
-
             });
         }
 
@@ -115,10 +105,8 @@ public:
                         });
 
 
-        // Publisher pdt status
         _pdt_publisher = this->create_publisher<std_msgs::msg::String>("/seed_pdt_drone/status", 1);
 
-        // Avvio thread per comandi PDT in background
         boost::thread pdt_input_t(&MoveManager::pdt_input, this);
     }
 
@@ -170,7 +158,7 @@ public:
 
         t.transform.translation.x = 0.15;
         t.transform.translation.y = 0.03;
-        t.transform.translation.z = 0.202;
+        t.transform.translation.z = 0.0;  // Camera at same height as base_link
 
         tf2::Quaternion q;
         q.setRPY(-1.5707, 0, -1.5707);

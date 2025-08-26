@@ -80,6 +80,7 @@ bool PATH_PLANNER::isStateValid(const ob::State *state) {
 
     // extract the second component of the state and cast it to what we expect
     const ob::SO3StateSpace::StateType *rot = se3state->as<ob::SO3StateSpace::StateType>(1);
+    (void)rot; // Suppress unused variable warning
 
     if( pos->values[0] < _x_bounds[0] || pos->values[0] > _x_bounds[1]) {
         //std::cout << "X fault: " << pos->values[0] << " - " << _x_bounds[0] << ", " << _x_bounds[1] << std::endl;
@@ -227,10 +228,10 @@ int PATH_PLANNER::optimize_path(const std::vector<POSE> & poses, const double de
     fcl::CollisionObject robotObject(_Robot);
 
 
-    for ( int i=0; i<opt_poses.size()-1; i++ ) {
-        for ( int j=i+1;j<opt_poses.size(); j++ ) {
-            int i0=i;
-            int i1=j;
+    for ( size_t i=0; i<opt_poses.size()-1; i++ ) {
+        for ( size_t j=i+1;j<opt_poses.size(); j++ ) {
+            size_t i0=i;
+            size_t i1=j;
         
             p0 << opt_poses[i0].position.x, opt_poses[i0].position.y, opt_poses[i0].position.z;
             p1 << opt_poses[i1].position.x, opt_poses[i1].position.y, opt_poses[i1].position.z;    
@@ -363,7 +364,7 @@ int PATH_PLANNER::plan(const double & max_t, const double * xbounds, const doubl
         poses.resize( pth->getStateCount () );
 
         //for (std::size_t path_idx = 0; path_idx < pth->getStateCount (); path_idx++) {
-        for ( auto path_idx = 0; path_idx < pth->getStateCount (); path_idx++) {
+        for ( std::size_t path_idx = 0; path_idx < pth->getStateCount (); path_idx++) {
 		
         	const ob::SE3StateSpace::StateType *se3state = pth->getState(path_idx)->as<ob::SE3StateSpace::StateType>();
 			// extract the first component of the state and cast it to what we expect
